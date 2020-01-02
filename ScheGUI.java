@@ -12,6 +12,7 @@ import java.util.Scanner;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.stage.StageStyle;
+import javafx.scene.control.Label;
 
 public class ScheGUI extends Application {
 
@@ -34,10 +35,11 @@ public class ScheGUI extends Application {
 //        //Background
 //        Rectangle bg = new Rectangle(0,0,primaryStage.getWidth(), primaryStage.getHeight());//bg.setFill(Color.web("2E2E2E"));
 //        parent.getChildren().add(bg);
-        test.setFill(Color.web("5E8AF3"));
+        test.setFill(Color.web("525252"));
 
 
         //ScheGUI Label
+        Label l = new Label("kill me");
         Label label1 = new Label("ScheGUI");
         label1.setScaleX(4);label1.setScaleY(4); label1.setTextFill(Color.BLACK);
         label1.setTranslateX(/*primaryStage.getWidth()/2*/80);label1.setTranslateY(/*primaryStage.getHeight()/2*/20);
