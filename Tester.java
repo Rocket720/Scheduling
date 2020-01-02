@@ -2660,62 +2660,102 @@ class Master {
         // clears periodTrying for next time, not sure necessary
     }
 
-    void populatePeriodArray(Course course) {
+    void populatePeriodArray(Course course) { //implement multiple sections?
         ArrayList<Integer> trySect = new ArrayList<Integer>();
-        for (int i = 1; i <= 16 - course.lab * 2; i += course.lab * 2) {
+        for (int i = 1; i <= 17 - course.lab * 2; i += course.lab * 2) {
             trySect.clear();
             for (int j = i; j < i + course.lab * 2; j++)
                 trySect.add(j);
 
-            course.periods.add(trySect);
+            course.periods.add((ArrayList<Integer>)trySect.clone()); // needs to be cloned as clearing trySect clears it inside the periods */
         }
     }
 
-    void check(Course... testingCourses) {
+    void check(Course... testingCourses) { //working but not exactly as intended? needs checking
         ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
-        ArrayList<Student> totalRoster = new ArrayList<Student>();
 
         for (int i = 0; i < testingCourses.length; i++) { // can't use for each, need to change course outside loop
             if (testingCourses[i].periods.isEmpty())
                 populatePeriodArray(testingCourses[i]);
-            for (Student student : testingCourses[i].roster) {
-                if (!totalRoster.contains(student))
-                    totalRoster.add(student);
-            }
+//            for (Student student : testingCourses[i].roster) {
+//                if (!currCourse.roster.contains(student))
+//                    currCourse.roster.add(student);
+//            }
         }
         for (Course currCourse : testingCourses) {
             int classCount = 0, period = 0; // used for numPermsArray, based on the period?
-            for (int student = 0; student < totalRoster.size(); student++) { // change to regular for loop to access changed conflict boolean
+            for (int student = 0; student < currCourse.roster.size(); student++) { // change to regular for loop to access changed conflict boolean
                 Student.maxP = 0;
-                for (Course course : totalRoster.get(student).courses) // add student courses
-                    totalRoster.get(student).temp1.add(course.periods);
-                totalRoster.get(student).before = take3(totalRoster.get(student).temp1);
+                numPermsArray.add(new ArrayList<Integer>());
+                if(currCourse.roster.get(student).temp1.isEmpty()) {
+                    for (Course course : currCourse.roster.get(student).courses) // add student courses
+                        currCourse.roster.get(student).temp1.add(course.periods);
+                    currCourse.roster.get(student).before = take3(currCourse.roster.get(student).temp1);
+                }
 
-                for (Course course : testingCourses) { // add testing courses
+                for (Course course : testingCourses) { // add testing courses -- check as if say testingCourse[!currCourse] is scheduled only for a certain period
                     if (course != currCourse) // add all other courses to temp1
-                        totalRoster.get(student).temp1.add(course.periods);
+                        currCourse.roster.get(student).temp1.add(course.periods);
                 }
                 for (ArrayList<Integer> section : currCourse.periods) {
                     ArrayList<ArrayList<Integer>> course = new ArrayList<>();
                     course.add(section); // needed to add this for temp1 to work
-                    totalRoster.get(student).temp1.add(course);
-                    totalRoster.get(student).conflict.add(totalRoster.get(student).before == take3(totalRoster.get(student).temp1));
-                    totalRoster.get(student).temp1.remove(totalRoster.get(student).temp1.size() - 1);
-                    numPermsArray.get(++classCount).add(Student.maxP); //++classCount allows next use of classCount to be += 1
+                    currCourse.roster.get(student).temp1.add(course);
+                    currCourse.roster.get(student).conflict.add(currCourse.roster.get(student).before == take3(currCourse.roster.get(student).temp1));
+                    currCourse.roster.get(student).temp1.remove(currCourse.roster.get(student).temp1.size() - 1);
+                    numPermsArray.get(classCount).add(Student.maxP); //++classCount allows next use of classCount to be += 1
                 }
+                classCount++;
+                currCourse.roster.get(student).temp1.clear();
             }
 
             boolean printAll = true;
             int minConflict = 100, numPeriodsConflicted = 0;
+            for (int i = 0; i < numPermsArray.size(); i++) {
+                Collections.sort(numPermsArray.get(i));
+            }
             for (int runs = 0; runs < 2; runs++) {
+                System.out.println(currCourse.name);
                 for (ArrayList<Integer> periods : currCourse.periods) {
                     int conflictCount = 0;
                     for (Student student : currCourse.roster) {
                         if (student.conflict.get(period))
                             conflictCount++;
                     }
+                    if(Math.min(minConflict, conflictCount) != minConflict) {
+                        minConflict = conflictCount;
+                        numPeriodsConflicted = 1;
+                    } else if(conflictCount == minConflict)
+                        numPeriodsConflicted++;
 
+                    if(printAll || conflictCount == minConflict){
+                        System.out.print("Period: " + periods + " - " + conflictCount + " conflicts ");
+
+                        int index = currCourse.periods.indexOf(periods);
+                        for (int j = 1; j <= 5; j++) {
+                            int counter = 0;
+                            for (int k = 0; k < numPermsArray.get(index).size(); k++) {
+                                if (numPermsArray.get(index).get(k) == j)
+                                    counter++;
+                            }
+                            // if (counter!=0)
+                            System.out.print(counter + " ");
+                        }
+                        for(Student student : currCourse.roster){
+                            if(student.conflict.get(period))
+                                System.out.print(" " + student.name);
+                        }
+                        System.out.println();
+                    }
+                    period++;
                 }
+
+                if(numPeriodsConflicted >= .75 * currCourse.periods.size())
+                    break;
+
+                if(printAll)
+                    System.out.println("-------------------------------");
+                printAll = false;
             }
         }
 
@@ -3591,8 +3631,8 @@ public class Tester {
         x.add(HonorsItalian3_508170, 15, 16);
         x.add(Italian3_501170, 13, 14);
         x.add(EarthSciencewlab_PH301150, 1, 2, 4);//Period 1 and 2B
-//               x.add(APPhysics1wlab_PH309030, 7, 8, 9);//Period 4 and 5A
-//               x.add(APPhysics1wlab_PH309030, 14, 15, 16);//Period 7B and 8
+        x.add(APPhysics1wlab_PH309030, 7, 8, 9);//Period 4 and 5A
+        x.add(APPhysics1wlab_PH309030, 14, 15, 16);//Period 7B and 8
         x.add(APBiologywlab_PH309020, 3, 5, 6);//Period 2A and 3
         x.add(APBiologywlab_PH309020, 14, 15, 16);//Period 7B and 8
         x.add(Physicswlab_PH301090, 1, 2, 4);//Period 1 and 2A now 1 and2B
@@ -3736,7 +3776,7 @@ public class Tester {
 
         x.add(AlgebraIYr2_201210, 1, 2);
 
-        x.add(IntroductionToPsychology_401070, 7, 8);
+//        x.add(IntroductionToPsychology_401070, 7, 8);
 
         x.add(HonorsAlgebraIITrigonometry_208090, 1, 2);
         x.add(HonorsAlgebraIITrigonometry_208090, 5, 6);
@@ -3805,7 +3845,7 @@ public class Tester {
         x.add(IntrotoHumanitiesResearch_101033s, 9);
         x.add(AlgebrawLab_201010I, 9, 11, 12);
         x.add(AlgebrawLab_201010, 9, 11, 12);
-        x.add(Robotics_721063, 4);
+//        x.add(Robotics_721063, 4);
         x.add(IntrotoScienceResearch_301033, 14);
         x.add(Italian2_501160, 5, 6);
         x.add(Italian2_501160, 13, 14);  // moved 8 to 7
@@ -4014,7 +4054,7 @@ public class Tester {
 //        x.add(CI, 11,12);
 
 
-        x.check(APPhysics1wlab_PH309030);
+        x.check(Robotics_721063, IntroductionToPsychology_401070);
 
         //       x.seatCount(9);
         //        x.seatCount(10);
@@ -4025,3 +4065,4 @@ public class Tester {
 
     }
 }
+
