@@ -2405,8 +2405,7 @@ class Master {
                                     numPermsArray.add(new ArrayList<>());// not sure about this, think its good
                                 }
 
-                                x.roster.get(i).conflict
-                                        .add(x.roster.get(i).before - take3(x.roster.get(i).temp1) == 0);
+                                x.roster.get(i).conflict.add(x.roster.get(i).before - take3(x.roster.get(i).temp1) == 0);
                                 numPermsArray.get(count).add(Student.maxP);//
                                 count++;
                                 Student.maxP = 0;
@@ -2667,7 +2666,7 @@ class Master {
             for (int j = i; j < i + course.lab * 2; j++)
                 trySect.add(j);
 
-            course.periods.add((ArrayList<Integer>)trySect.clone()); // needs to be cloned as clearing trySect clears it inside the periods */
+            course.periods.add((ArrayList<Integer>) trySect.clone()); // needs to be cloned as clearing trySect clears it inside the periods */
         }
     }
 
@@ -2687,24 +2686,25 @@ class Master {
             for (int student = 0; student < currCourse.roster.size(); student++) { // change to regular for loop to access changed conflict boolean
                 Student.maxP = 0;
                 numPermsArray.add(new ArrayList<Integer>());
-                if(currCourse.roster.get(student).temp1.isEmpty()) {
+                if (currCourse.roster.get(student).temp1.isEmpty()) {
                     for (Course course : currCourse.roster.get(student).courses) // add student courses
                         currCourse.roster.get(student).temp1.add(course.periods);
                     currCourse.roster.get(student).before = take3(currCourse.roster.get(student).temp1);
                 }
 
-                for (Course course : testingCourses) { // add testing courses -- check as if say testingCourse[!currCourse] is scheduled only for a certain period
-                    if (course != currCourse) // add all other courses to temp1
-                        currCourse.roster.get(student).temp1.add(course.periods);
-                }
-                for (ArrayList<Integer> section : currCourse.periods) {
-                    ArrayList<ArrayList<Integer>> course = new ArrayList<>();
-                    course.add(section); // needed to add this for temp1 to work
-                    currCourse.roster.get(student).temp1.add(course);
-                    currCourse.roster.get(student).conflict.add(currCourse.roster.get(student).before == take3(currCourse.roster.get(student).temp1));
-                    currCourse.roster.get(student).temp1.remove(currCourse.roster.get(student).temp1.size() - 1);
-                    numPermsArray.get(classCount).add(Student.maxP); //++classCount allows next use of classCount to be += 1
-                }
+//                for (Course course : testingCourses) { // add testing courses -- check as if say testingCourse[!currCourse] is scheduled only for a certain period
+//                    if (course != currCourse) // add all other courses to temp1
+//                        currCourse.roster.get(student).temp1.add(course.periods);
+//                }
+//                for (ArrayList<Integer> section : currCourse.periods) {
+//                    ArrayList<ArrayList<Integer>> course = new ArrayList<>();
+//                    course.add(section); // needed to add this for temp1 to work
+//                    currCourse.roster.get(student).temp1.add(course);
+//                    currCourse.roster.get(student).conflict.add(currCourse.roster.get(student).before == take3(currCourse.roster.get(student).temp1));
+//                    currCourse.roster.get(student).temp1.remove(currCourse.roster.get(student).temp1.size() - 1);
+//                    numPermsArray.get(classCount).add(Student.maxP); //++classCount allows next use of classCount to be += 1
+//                }
+                recurseCheck(testingCourses, currCourse.roster.get(student));
                 classCount++;
                 currCourse.roster.get(student).temp1.clear();
             }
@@ -2722,13 +2722,13 @@ class Master {
                         if (student.conflict.get(period))
                             conflictCount++;
                     }
-                    if(Math.min(minConflict, conflictCount) != minConflict) {
+                    if (Math.min(minConflict, conflictCount) != minConflict) {
                         minConflict = conflictCount;
                         numPeriodsConflicted = 1;
-                    } else if(conflictCount == minConflict)
+                    } else if (conflictCount == minConflict)
                         numPeriodsConflicted++;
 
-                    if(printAll || conflictCount == minConflict){
+                    if (printAll || conflictCount == minConflict) {
                         System.out.print("Period: " + periods + " - " + conflictCount + " conflicts ");
 
                         int index = currCourse.periods.indexOf(periods);
@@ -2741,8 +2741,8 @@ class Master {
                             // if (counter!=0)
                             System.out.print(counter + " ");
                         }
-                        for(Student student : currCourse.roster){
-                            if(student.conflict.get(period))
+                        for (Student student : currCourse.roster) {
+                            if (student.conflict.get(period))
                                 System.out.print(" " + student.name);
                         }
                         System.out.println();
@@ -2750,10 +2750,10 @@ class Master {
                     period++;
                 }
 
-                if(numPeriodsConflicted >= .75 * currCourse.periods.size())
+                if (numPeriodsConflicted >= .75 * currCourse.periods.size())
                     break;
 
-                if(printAll)
+                if (printAll)
                     System.out.println("-------------------------------");
                 printAll = false;
             }
@@ -2761,7 +2761,26 @@ class Master {
 
     }
 
+    void recurseCheck(Course[] courses, Student student) {
+        Course course = courses[0];
+        for (ArrayList<Integer> section : course.periods) {
+            ArrayList<ArrayList<Integer>> coursePeriods = new ArrayList<>();
+            coursePeriods.add(section); // needed to add this for temp1 to work
+            student.temp1.add(coursePeriods);
+            if (courses.length == 1)
+                student.conflict.add(student.before == take3(student.temp1));
+            else {
+                Course[] newCourses = new Course[courses.length - 1];
+                for(int i = 1; i < courses.length; i++){
+                    newCourses[i - 1] = courses[i];
+                }
+                recurseCheck(newCourses, student);
+            }
+            student.temp1.remove(student.temp1.size() - 1);
+        }
+    }
 }
+
 
 class Course {
     String name;
@@ -4054,7 +4073,7 @@ public class Tester {
 //        x.add(CI, 11,12);
 
 
-        x.check(Robotics_721063, IntroductionToPsychology_401070);
+        x.check(IntroductionToPsychology_401070, Robotics_721063);
 
         //       x.seatCount(9);
         //        x.seatCount(10);
