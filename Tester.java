@@ -34,6 +34,7 @@ class Master {
     ArrayList<ArrayList<Course>> conflicts = new ArrayList<>();
     ArrayList<ArrayList<Student>> conflictedStudents = new ArrayList<>();
     ArrayList<Course> conflictedCourses = new ArrayList<>();
+    ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
 
     Master() {
 
@@ -1375,7 +1376,7 @@ class Master {
     }
 
     public void check(Course x, int sect) {
-        ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
+//        ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
         // for (int i = 0; i < x.roster.size(); i++)// for each student on the roster
         // {
         // 	x.roster.get(i).temp1.clear();
@@ -2671,7 +2672,7 @@ class Master {
     }
 
     void check(Course... testingCourses) { //working but not exactly as intended? needs checking
-        ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
+//        ArrayList<ArrayList<Integer>> numPermsArray = new ArrayList<>();
 
         for (int i = 0; i < testingCourses.length; i++) { // can't use for each, need to change course outside loop
             if (testingCourses[i].periods.isEmpty())
@@ -2687,8 +2688,14 @@ class Master {
                 Student.maxP = 0;
                 numPermsArray.add(new ArrayList<Integer>());
                 if (currCourse.roster.get(student).temp1.isEmpty()) {
-                    for (Course course : currCourse.roster.get(student).courses) // add student courses
-                        currCourse.roster.get(student).temp1.add(course.periods);
+                    for (Course course : currCourse.roster.get(student).courses) { // add student courses
+                        boolean notTesting = false;
+                        for (Course testing : testingCourses) //for whatever reason, this for and if statement made the runtime a million times better
+                            if (course != testing)
+                                notTesting = true;
+                        if (notTesting)
+                            currCourse.roster.get(student).temp1.add(course.periods);
+                    }
                     currCourse.roster.get(student).before = take3(currCourse.roster.get(student).temp1);
                 }
 
@@ -2732,15 +2739,15 @@ class Master {
                         System.out.print("Period: " + periods + " - " + conflictCount + " conflicts ");
 
                         int index = currCourse.periods.indexOf(periods);
-                        for (int j = 1; j <= 5; j++) {
-                            int counter = 0;
-                            for (int k = 0; k < numPermsArray.get(index).size(); k++) {
-                                if (numPermsArray.get(index).get(k) == j)
-                                    counter++;
-                            }
-                            // if (counter!=0)
-                            System.out.print(counter + " ");
-                        }
+//                        for (int j = 1; j <= 5; j++) {
+//                            int counter = 0;
+//                            for (int k = 0; k < numPermsArray.get(index).size(); k++) {
+//                                if (numPermsArray.get(index).get(k) == j)
+//                                    counter++;
+//                            }
+//                            // if (counter!=0)
+//                            System.out.print(counter + " ");
+//                        }
                         for (Student student : currCourse.roster) {
                             if (student.conflict.get(period))
                                 System.out.print(" " + student.name);
@@ -2762,20 +2769,25 @@ class Master {
     }
 
     void recurseCheck(Course[] courses, Student student) {
+        recurseCheck(courses, student, courses.length);
+    }
+
+    void recurseCheck(Course[] courses, Student student, int numCourses) {
         Course course = courses[0];
         for (ArrayList<Integer> section : course.periods) {
             ArrayList<ArrayList<Integer>> coursePeriods = new ArrayList<>();
             coursePeriods.add(section); // needed to add this for temp1 to work
             student.temp1.add(coursePeriods);
             if (courses.length == 1)
-                student.conflict.add(student.before == take3(student.temp1));
+                student.conflict.add(student.before + numCourses == take3(student.temp1));
             else {
                 Course[] newCourses = new Course[courses.length - 1];
-                for(int i = 1; i < courses.length; i++){
+                for (int i = 1; i < courses.length; i++) {
                     newCourses[i - 1] = courses[i];
                 }
-                recurseCheck(newCourses, student);
+                recurseCheck(newCourses, student, numCourses);
             }
+            Student.maxP = 0;
             student.temp1.remove(student.temp1.size() - 1);
         }
     }
@@ -4038,42 +4050,35 @@ public class Tester {
 
         //System.out.println(PersonalFitness_881053.roster.size());
 
-//        Course A = new Course("A", "1", 2, 0.5);//2 sections
-//        Course B = new Course("B", "1", 2);//2 sections
-//        Course C = new Course("C", "1234", 3);//2 sections
-//        Course CI = new Course("CI","1234I",1);
-//        Course D = new Course ("D","22",1);
-//        Student s1 = new Student("s1", 9);
-//        Student s2 = new Student("s2", 9);
-//        Student s3 = new Student("s3", 9);
-//        Student s4 = new Student("s4", 9);
-//        Student s5 = new Student("s5", 9);
-//        Student s6 = new Student("s6", 9);
-//        Student s7 = new Student("s7", 9);
-//        Student s8 = new Student("s8", 9);
-//        Student s9 = new Student("s9", 9);
-//        A.add(s2, s3);//                 A: (3) 1.5, (5) 1.5
-//        B.add(s3, s4, s5, s6);//          x  B: (3,4) 2.0 (7,8) 2.0
-//        C.add(s1, s3, s5,s8, s9);//       x  C: (3,4) 3.0 (11,12),3.0  (15,16) 3.0
-//        CI.add(s4,s6,s7);//              CI:(11,12)
-//        D.add(s1,s3,s5);					//use period (3,4) s1 - 1, s3 - 2, s5 - 2
-//
-//        x.add(A, 3);
-//        x.add(A,3);
-//        x.add(A, 5);
-//        x.add(B, 3, 4);
-//        x.add(B, 7, 8);
-//        x.add(B,7,8);
-//        x.add(C, 11, 12);
-//        x.add(C, 11, 12);
-//        x.add(C, 15, 16);
-//        x.add(C, 11, 12);
-//        x.add(C,3,4);
-//        x.add(C, 11, 12);
-//        x.add(CI, 11,12);
+        Course A = new Course("A", "1", 2, 0.5);//2 sections
+        Course B = new Course("B", "1", 2);//2 sections
+        Course C = new Course("C", "1234", 1);//1 section
+        Course D = new Course("D", "22", 1);
+
+        Student s1 = new Student("s1", 9);
+        Student s2 = new Student("s2", 9);
+        Student s3 = new Student("s3", 9);
+        Student s4 = new Student("s4", 9);
+        Student s5 = new Student("s5", 9);
+        Student s6 = new Student("s6", 9);
+        Student s7 = new Student("s7", 9);
+        Student s8 = new Student("s8", 9);
+        Student s9 = new Student("s9", 9);
+
+        A.add(s2, s3);
+        B.add(s3, s4, s5, s6);
+        C.add(s1, s3, s5);
+        D.add(s1, s3, s5);
 
 
-        x.check(IntroductionToPsychology_401070, Robotics_721063);
+        x.add(A, 3);
+        x.add(A, 9);
+        x.add(B, 3, 4);
+        x.add(B, 9, 10);
+
+        x.check(C,D);
+
+//        x.check(Robotics_721063, IntroductionToPsychology_401070);
 
         //       x.seatCount(9);
         //        x.seatCount(10);
